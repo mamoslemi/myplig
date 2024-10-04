@@ -145,6 +145,9 @@ export default class OllamaModel implements Model {
 				stream: true,
 				options: {
 					temp: model_settings.temperature,
+					...(model_settings.context_window_size && {
+						num_ctx: model_settings.context_window_size,
+					}),
 				},
 			});
 			request.write(body);

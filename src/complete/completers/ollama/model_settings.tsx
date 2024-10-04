@@ -7,6 +7,7 @@ export const settings_schema = z.object({
 	user_prompt: z.string(),
 	temperature: z.number().optional(),
 	prompt_length: z.number().optional(),
+	context_window_size: z.number().min(1).optional(),
 });
 
 export type Settings = z.infer<typeof settings_schema>;
@@ -79,6 +80,25 @@ export function SettingsUI({
 							JSON.stringify({
 								...parsed_settings,
 								temperature: parseFloat(e.target.value),
+							})
+						)
+					}
+				/>
+			</SettingsItem>
+			<SettingsItem name="Context Window Size">
+				<input
+					type="number"
+					min={1}
+					value={
+						parsed_settings.context_window_size === undefined
+							? ""
+							: parsed_settings.context_window_size
+					}
+					onChange={(e) =>
+						saveSettings(
+							JSON.stringify({
+								...parsed_settings,
+								context_window_size: parseInt(e.target.value),
 							})
 						)
 					}
