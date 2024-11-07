@@ -55,6 +55,22 @@ Groq is an ultrafast model provider, and for now (end of May 2024) is fully free
 
 Ollama is a tool for running models locally, and yet another solution to problems with latency and pricing. With ollama and a small model - such as phi-3 - you can freely lower the delay as much as you'd want, and the frequent requests will not cost you a fortune. To use ollama with this plugin, make sure the ollama service is running and switch the provider to ollama - that's it!
 
+## LM Studio
+
+LM Studio is a powerful desktop application that allows you to run local LLMs with a user-friendly interface. To use LM Studio with this plugin:
+
+1. Download and install [LM Studio](https://lmstudio.ai/)
+2. In LM Studio, go to the "Developer" tab
+3. Start the local server (it runs on port 3245 by default)
+4. In Obsidian's Companion settings, select "LM Studio" as your provider
+5. The default endpoint (`http://localhost:3245`) should work if you haven't changed the port
+
+LM Studio is particularly useful because:
+- It provides a nice GUI for downloading and managing models
+- It supports both CPU and GPU inference
+- It works on Windows, macOS, and Linux
+- It's completely free and runs everything locally
+
 # Presets
 
 Companion's "Presets" feature allows you to save your current settings as a preset, enable a "command" switch for that preset, and then use the preset as a global editor command in the command palette. This can be useful if you have certain settings that you use frequently and want to access them quickly and easily.
