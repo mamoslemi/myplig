@@ -5,6 +5,10 @@ import { useState, useEffect } from "react";
 import Companion, { AcceptSettings } from "../main";
 import SettingsItem from "../components/SettingsItem";
 
+interface ProviderSettings {
+	[key: string]: any
+}
+
 function Presets({
 	plugin,
 	setModel,
@@ -122,12 +126,10 @@ function ProviderModelChooser({
 	reload_signal: { reload: boolean };
 }) {
 	const [provider, _setProvider] = useState<null | Completer>(null);
-	const [providerSettings, _setProviderSettings] = useState<null | string>(
-		null
-	);
+	const [providerSettings, _setProviderSettings] = useState<ProviderSettings>({});
 	const [available_models, setAvailableModels] = useState<Model[]>([]);
 	const [model, _setModel] = useState<null | Model>(null);
-	const [modelSettings, _setModelSettings] = useState<null | string>(null);
+	const [modelSettings, _setModelSettings] = useState<ProviderSettings>({});
 
 	useEffect(() => {
 		const candidates = available.filter(
@@ -135,8 +137,7 @@ function ProviderModelChooser({
 		);
 		_setProvider(candidates.length > 0 ? candidates[0] : available[0]);
 		_setProviderSettings(
-			plugin.settings.provider_settings[plugin.settings.provider]
-				?.settings
+			JSON.parse(plugin.settings.provider_settings[plugin.settings.provider]?.settings || "{}")
 		);
 	}, [plugin.settings.provider]);
 
@@ -146,7 +147,7 @@ function ProviderModelChooser({
 			setAvailableModels([]);
 			_setModel(null);
 			const available_models = await provider.get_models(
-				plugin.settings.provider_settings[provider.id]?.settings
+				JSON.stringify(providerSettings)
 			);
 			setAvailableModels(available_models);
 			const candidates = available_models.filter(
@@ -160,30 +161,27 @@ function ProviderModelChooser({
 					? candidates[0].id
 					: available_models[0].id;
 			_setModelSettings(
-				plugin.settings.provider_settings[provider.id]?.models[
-					plugin.settings.model
-				]
+				JSON.parse(plugin.settings.provider_settings[provider.id]?.models[plugin.settings.model] || "{}")
 			);
 		};
 		fetch_model();
-	}, [plugin.settings.model, provider, providerSettings]);
+	}, [plugin.settings.model, provider, JSON.stringify(providerSettings)]);
 
 	const setProvider = (provider_id: string) => {
 		_setProvider(
 			available.filter((provider) => provider.id === provider_id)[0]
 		);
-		_setProviderSettings(
-			plugin.settings.provider_settings[provider_id]?.settings
-		);
+		const newSettings = JSON.parse(plugin.settings.provider_settings[provider_id]?.settings || "{}")
+		_setProviderSettings(newSettings);
 		plugin.settings.provider = provider_id;
 		plugin.saveData(plugin.settings);
 	};
 
-	const setProviderSettings = (settings: string) => {
+	const setProviderSettings = (settings: ProviderSettings) => {
 		if (!provider) return;
 		_setProviderSettings(settings);
 		plugin.settings.provider_settings[provider.id] = {
-			settings,
+			settings: JSON.stringify(settings),
 			models: {
 				...plugin.settings.provider_settings[provider.id]?.models,
 			},
@@ -196,20 +194,19 @@ function ProviderModelChooser({
 		if (!provider) return;
 		_setModel(available_models.filter((model) => model.id === model_id)[0]);
 		plugin.settings.model = model_id;
-		_setModelSettings(
-			plugin.settings.provider_settings[provider.id]?.models[model_id]
-		);
+		const newSettings = JSON.parse(plugin.settings.provider_settings[provider.id]?.models[model_id] || "{}")
+		_setModelSettings(newSettings);
 		plugin.saveData(plugin.settings);
 	};
 
-	const setModelSettings = (settings: string) => {
+	const setModelSettings = (settings: ProviderSettings) => {
 		if (!provider || !model) return;
 		_setModelSettings(settings);
 		plugin.settings.provider_settings[provider.id] = {
 			settings: plugin.settings.provider_settings[provider.id]?.settings,
 			models: {
 				...plugin.settings.provider_settings[provider.id]?.models,
-				[model.id]: settings,
+				[model.id]: JSON.stringify(settings),
 			},
 		};
 		plugin.models = [];
@@ -240,8 +237,8 @@ function ProviderModelChooser({
 				</SettingsItem>
 				{ProviderSettings && (
 					<ProviderSettings
-						settings={providerSettings}
-						saveSettings={setProviderSettings}
+						settings={JSON.stringify(providerSettings)}
+						saveSettings={(settingsStr: string) => setProviderSettings(JSON.parse(settingsStr))}
 					/>
 				)}
 			</>
@@ -265,8 +262,8 @@ function ProviderModelChooser({
 				</SettingsItem>
 				{ModelSettings && (
 					<ModelSettings
-						settings={modelSettings}
-						saveSettings={setModelSettings}
+						settings={JSON.stringify(modelSettings)}
+						saveSettings={(settingsStr: string) => setModelSettings(JSON.parse(settingsStr))}
 					/>
 				)}
 			</>
@@ -276,6 +273,72 @@ function ProviderModelChooser({
 				setProvider={setProvider}
 				reload_signal={reload_signal}
 			/>
+			{provider?.id === "ollama" && (
+				<>
+					<SettingsItem name="num_ctx">
+						<input
+							type="number"
+							value={
+								providerSettings.num_ctx || ""
+							}
+							onChange={(e) => {
+								const newSettings = {
+									...providerSettings,
+									num_ctx: parseInt(e.target.value, 10),
+								}
+								setProviderSettings(newSettings)
+							}}
+						/>
+					</SettingsItem>
+					<SettingsItem name="num_batch">
+						<input
+							type="number"
+							value={
+								providerSettings.num_batch || ""
+							}
+							onChange={(e) => {
+								const newSettings = {
+									...providerSettings,
+									num_batch: parseInt(e.target.value, 10),
+								}
+								setProviderSettings(newSettings)
+							}}
+						/>
+					</SettingsItem>
+				</>
+			)}
+			<SettingsItem name="top_p">
+				<input
+					type="number"
+					step="0.01"
+					value={
+						providerSettings.top_p || ""
+					}
+					onChange={(e) => {
+						const newSettings = {
+							...providerSettings,
+							top_p: parseFloat(e.target.value),
+						}
+						setProviderSettings(newSettings)
+					}}
+				/>
+			</SettingsItem>
+			<SettingsItem name="min_p">
+				<input
+					type="number"
+					step="0.01"
+					value={
+						providerSettings.min_p || ""
+					}
+					onChange={(e) => {
+						const newSettings = {
+							...providerSettings,
+							min_p: parseFloat(e.target.value),
+						}
+						setProviderSettings(newSettings)
+					}}
+				/>
+			</SettingsItem>
 		</>
 	);
 }

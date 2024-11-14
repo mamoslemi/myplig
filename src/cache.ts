@@ -16,9 +16,9 @@ function findLastRegexIndex(regex: RegExp, str: string) {
 class ExhaustableConsumable<T> {
 	queue: T[];
 	consumers: ((item: { item: T } | null) => void)[];
-	exhausted: boolean = false;
+	exhausted = false;
 
-	constructor(exhausted: boolean = false) {
+	constructor(exhausted = false) {
 		this.queue = [];
 		this.consumers = [];
 		this.exhausted = exhausted;
@@ -28,14 +28,14 @@ class ExhaustableConsumable<T> {
 		this.queue.push(item);
 		const old_consumers = this.consumers;
 		this.consumers = [];
-		for (let consumer of old_consumers) {
+		for (const consumer of old_consumers) {
 			consumer({ item });
 		}
 	}
 
 	exhaust() {
 		this.exhausted = true;
-		for (let consumer of this.consumers) {
+		for (const consumer of this.consumers) {
 			consumer(null);
 		}
 	}
@@ -46,11 +46,11 @@ class ExhaustableConsumable<T> {
 	}
 
 	async *iter(): AsyncGenerator<T> {
-		for (let item of this.queue) {
+		for (const item of this.queue) {
 			yield item;
 		}
 
-		let next_items: { item: T }[] = [];
+		const next_items: { item: T }[] = [];
 		let next_item_promise: Promise<void> | null = Promise.resolve();
 		const add_resolver = () => {
 			next_item_promise = new Promise<void>((resolve) => {
@@ -88,7 +88,7 @@ export class CompletionCacher {
 	model_settings: string;
 	accept_settings: AcceptSettings;
 	accept_with_obsidian: boolean;
-	last_suggestion: string = "";
+	last_suggestion = "";
 
 	constructor(
 		model: Model,
@@ -106,7 +106,7 @@ export class CompletionCacher {
 	get_cached_queue(
 		prompt: Prompt
 	): [Prompt, ExhaustableConsumable<string>] | null {
-		for (let [cached_prompt, cached_suggestions] of this.cache) {
+		for (const [cached_prompt, cached_suggestions] of this.cache) {
 			const cached_prompt_and_continuation =
 				cached_prompt.prefix + cached_suggestions.queue.join("");
 			if (prompt.suffix != cached_prompt.suffix) {
@@ -144,7 +144,7 @@ export class CompletionCacher {
 			this.get_cached_queue(prompt)?.[1] ??
 			this.cache
 				.set(prompt, new ExhaustableConsumable<string>())
-				.get(prompt)!;
+				.get(prompt) ?? new ExhaustableConsumable<string>();
 
 		if (!queue.exhausted) return;
 		queue.reset();
@@ -169,7 +169,7 @@ export class CompletionCacher {
 			this.get_cached_queue(prompt)?.[1] ??
 			this.cache
 				.set(prompt, new ExhaustableConsumable<string>())
-				.get(prompt)!;
+				.get(prompt) ?? new ExhaustableConsumable<string>();
 
 		if (!queue.exhausted) return;
 		queue.reset();
@@ -202,13 +202,13 @@ export class CompletionCacher {
 
 	async *complete(
 		prompt: Prompt,
-		stream: boolean = true
+		stream = true
 	): AsyncGenerator<Suggestion> {
 		const [starting_prompt, queue] = this.get_cached_queue(prompt) ?? [
 			prompt,
 			this.cache
 				.set(prompt, new ExhaustableConsumable<string>(true))
-				.get(prompt)!,
+				.get(prompt) ?? new ExhaustableConsumable<string>(true),
 		];
 
 		this.ensure_fetched(prompt, queue, stream);
@@ -270,15 +270,15 @@ export class CompletionCacher {
 						new RegExp(this.accept_settings.splitter_regex, "gi"),
 						completion
 					)
-			  );
+			);
 		const display_splitter_match = completion
 			.slice(this.accept_settings.min_display_length)
 			.match(new RegExp(this.accept_settings.display_splitter_regex));
 		const display_splitter_index =
 			display_splitter_match && display_splitter_match.index != undefined
 				? display_splitter_match.index +
-				  display_splitter_match.length +
-				  50
+				display_splitter_match.length +
+				50
 				: -1;
 		partial_completion = partial_completion.slice(
 			0,
@@ -296,7 +296,7 @@ export class CompletionCacher {
 			complete_splitter_match &&
 			complete_splitter_match.index != undefined
 				? complete_splitter_match.index +
-				  this.accept_settings.min_accept_length
+				this.accept_settings.min_accept_length
 				: undefined;
 		const first_word = completion.slice(0, complete_splitter_index);
 
