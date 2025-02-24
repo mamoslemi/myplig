@@ -1,6 +1,6 @@
 [
     {
-        "id": "text-davinci-003",
+        "id": "NousResearch/Hermes-3-Llama-3.1-70B",
         "name": "Davinci-003",
         "description": "Can do any language task with better quality, longer output, and consistent instruction-following than the curie, babbage, or ada models. Also supports inserting completions within text."
     },
